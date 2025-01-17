@@ -1,6 +1,6 @@
 import { StatusCodes } from 'http-status-codes'
 import ms from 'ms'
-
+import { JwtProvider } from '~/providers/JwtProvider'
 // Mock nhanh thông tin user thay vì phải tạo Database rồi query.
 const MOCK_DATABASE = {
   USER: {
@@ -28,7 +28,44 @@ const login = async (req, res) => {
     }
 
     // Trường hợp nhập đúng thông tin tài khoản, tạo token và trả về cho phía Client
-    res.status(StatusCodes.OK).json({ message: 'Login API success!' })
+    //1. Tạo payload (userInfo) để đính kèm trong JWT gửi về Client
+    const payload = {
+      id: MOCK_DATABASE.USER.ID,
+      email: MOCK_DATABASE.USER.EMAIL
+    }
+    // 2. Tạo ra 2 token: access token và refresh token
+    const accessToken = await JwtProvider.generateToken(
+      payload,
+      ACCESS_TOKEN_SECRET_SIGNATURE,
+      '1h'
+    )
+    const refreshToken = await JwtProvider.generateToken(
+      payload,
+      REFRESH_TOKEN_SECRET_SIGNATURE,
+      '14 days'
+    )
+    //3 Xử lý trường hợp trả về http only cookie cho Client (Cách 1: Lưu vào cookie)
+    // Thời gian sống tối đa của cookie là 14 ngày, chúng ta có thể set là tối đa nhưng thời gian sống của accessToken lưu bên trong là 1h
+    res.cookie('accessToken', accessToken, {
+      httpOnly: true,
+      secure: true,
+      sameSite: 'none',
+      maxAge: ms('14 days')
+    })
+    res.cookie('refreshToken', refreshToken, {
+      httpOnly: true,
+      secure: true,
+      sameSite: 'none',
+      maxAge: ms('14 days')
+    })
+
+    //4. Trả thông tin user + token về cho Client khi muốn lưu vào local Storage (Cách 2)
+    // Chỉ cần chọn 1 trong 2 chứ không cần làm cả 2
+    res.status(StatusCodes.OK).json({
+      ...payload,
+      accessToken,
+      refreshToken
+    })
   } catch (error) {
     res.status(StatusCodes.INTERNAL_SERVER_ERROR).json(error)
   }
