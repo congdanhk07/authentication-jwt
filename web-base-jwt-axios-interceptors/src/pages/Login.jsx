@@ -1,17 +1,18 @@
+import { Card as MuiCard } from '@mui/material'
+import Alert from '@mui/material/Alert'
 import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
-import { Card as MuiCard } from '@mui/material'
 import CardActions from '@mui/material/CardActions'
 import TextField from '@mui/material/TextField'
-import Zoom from '@mui/material/Zoom'
-import Alert from '@mui/material/Alert'
-import { useForm } from 'react-hook-form'
 import Typography from '@mui/material/Typography'
-import congdanhIcon from '../assets/congdanh-logo.png'
-import { toast } from 'react-toastify'
-import { API_ROOT } from '~/utils/constants'
+import Zoom from '@mui/material/Zoom'
+import { useForm } from 'react-hook-form'
 import authorizedAxiosInstance from '~/utils/authorizedAxios'
+import { API_ROOT } from '~/utils/constants'
+import congdanhIcon from '../assets/congdanh-logo.png'
+import { useNavigate } from 'react-router-dom'
 function Login() {
+  const navigate = useNavigate()
   const {
     register,
     handleSubmit,
@@ -25,7 +26,14 @@ function Login() {
       data
     )
     console.log(res.data)
-    toast.success(res.data?.message)
+    const userInfo = {
+      id: res.data.id,
+      email: res.data.email
+    }
+    localStorage.setItem('accessToken', res.data.accessToken)
+    localStorage.setItem('refreshToken', res.data.refreshToken)
+    localStorage.setItem('userInfo', JSON.stringify(userInfo))
+    navigate('/dashboard')
   }
 
   return (
