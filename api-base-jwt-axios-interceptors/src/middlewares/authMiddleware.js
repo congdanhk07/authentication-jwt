@@ -13,6 +13,7 @@ const isAuthorized = async (req, res, next) => {
     res
       .status(StatusCodes.UNAUTHORIZED)
       .json({ message: 'Unauthorized! Token not found' })
+    return
   }
   //Cách 2:lấy accessToken từ phía FE lưu trong localStorage và gửi lên header authorization
   const accessTokenFromHeader = req.headers.authorization
@@ -21,24 +22,31 @@ const isAuthorized = async (req, res, next) => {
     res
       .status(StatusCodes.UNAUTHORIZED)
       .json({ message: 'Unauthorized! Token not found' })
+    return
   }
 
   try {
     // Bước 1: Thực thi xác thực token (verify)
     const accessTokenDecoded = await JwtProvider.verifyToken(
       accessTokenFromCookie,
+      // accessTokenFromHeader.substring('Bearer '.length),
       ACCESS_TOKEN_SECRET_SIGNATURE
     )
     // Bước 2: Nếu token hợp lệ thì sẽ lưu thông tin đã decode vào req.jwtDecoded để sử dụng cho các tầng xử lý sau -> Lấy đc các giá trị đã decode (email, id user)
     req.jwtDecoded = accessTokenDecoded
     // Bước 3: Cho req đi tiếp
+    next()
   } catch (error) {
     console.log('Error from authMiddleware:', error)
     //Case 1: Nếu accessToken hết hạn (expired) -> trả về 410 -> Client sử dụng refreshToken
-    if (error.message?.include('jwt expired')) {
+    if (error.message?.includes('jwt expired')) {
       res.status(StatusCodes.GONE).json({ message: 'Please refresh token' })
+      return
     }
-    //Case 2: Nếu accessToken không hợp lệ -> trả lỗi 401 -> FE xử lý Logout/gọi API logout
+    //Case 2: Nếu accessToken không hợp lệ (ngoài trường hợp hết hạn token) -> trả lỗi 401 -> FE xử lý Logout/gọi API logout
+    res
+      .status(StatusCodes.UNAUTHORIZED)
+      .json({ message: 'Unauthorized! Please login again' })
   }
 }
 export const authMiddleware = {
