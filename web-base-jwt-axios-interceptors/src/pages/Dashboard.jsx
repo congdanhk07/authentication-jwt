@@ -1,26 +1,40 @@
 import Alert from '@mui/material/Alert'
 import Box from '@mui/material/Box'
+import Button from '@mui/material/Button'
 import CircularProgress from '@mui/material/CircularProgress'
 import Divider from '@mui/material/Divider'
 import Typography from '@mui/material/Typography'
 import { useEffect, useState } from 'react'
-import { toast } from 'react-toastify'
 import authorizedAxiosInstance from '~/utils/authorizedAxios'
 import { API_ROOT } from '~/utils/constants'
-
+import { useNavigate } from 'react-router-dom'
 function Dashboard() {
   const [user, setUser] = useState(null)
+  const navigate = useNavigate()
 
+  const handleLogout = async () => {
+    // Case 1: Với trường hợp dùng localStorage -> Xóa thông tin user trong localStorage
+    localStorage.removeItem('userInfo')
+    localStorage.removeItem('accessToken')
+    localStorage.removeItem('refreshToken')
+
+    // Case 2: Với trường hợp dùng Cookies -> Gọi API để xử lý remove Cookies
+    await authorizedAxiosInstance.delete(`${API_ROOT}/v1/users/logout`)
+    setUser(null)
+
+    // Điều hướng đến Login sau khi remove thành công
+    navigate('/login')
+  }
   useEffect(() => {
     const fetchData = async () => {
       const res = await authorizedAxiosInstance.get(
         `${API_ROOT}/v1/dashboards/access`
       )
-      console.log('Data from API', res.data)
-      console.log(
-        'Data from Local Storage',
-        JSON.parse(localStorage.getItem('userInfo'))
-      )
+      // console.log('Data from API', res.data)
+      // console.log(
+      //   'Data from Local Storage',
+      //   JSON.parse(localStorage.getItem('userInfo'))
+      // )
       setUser(res.data)
     }
     fetchData()
@@ -68,7 +82,20 @@ function Dashboard() {
         </Typography>
         &nbsp; đăng nhập thành công thì mới cho truy cập vào.
       </Alert>
-
+      <Button
+        onClick={handleLogout}
+        type='button'
+        variant='contained'
+        color='info'
+        size='large'
+        sx={{
+          mt: 2,
+          maxWidth: 'min-content',
+          alignSelf: 'flex-end'
+        }}
+      >
+        LOGOUT
+      </Button>
       <Divider sx={{ my: 2 }} />
     </Box>
   )

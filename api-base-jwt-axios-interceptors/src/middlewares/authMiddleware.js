@@ -8,7 +8,6 @@ import {
 const isAuthorized = async (req, res, next) => {
   //Cách 1: lấy accessToken trong req cookies từ client gửi - withCredentials trong file authorizeAxios và credentials trong CORS
   const accessTokenFromCookie = req.cookies?.accessToken
-  console.log('accessTokenFromCookie', accessTokenFromCookie)
   if (!accessTokenFromCookie) {
     res
       .status(StatusCodes.UNAUTHORIZED)
@@ -17,7 +16,6 @@ const isAuthorized = async (req, res, next) => {
   }
   //Cách 2:lấy accessToken từ phía FE lưu trong localStorage và gửi lên header authorization
   const accessTokenFromHeader = req.headers.authorization
-  console.log('accessTokenFromHeader', accessTokenFromHeader)
   if (!accessTokenFromHeader) {
     res
       .status(StatusCodes.UNAUTHORIZED)
@@ -27,6 +25,7 @@ const isAuthorized = async (req, res, next) => {
 
   try {
     // Bước 1: Thực thi xác thực token (verify)
+    // verify bằng cookies hoặc header -> chọn 1 cách
     const accessTokenDecoded = await JwtProvider.verifyToken(
       accessTokenFromCookie,
       // accessTokenFromHeader.substring('Bearer '.length),
@@ -37,7 +36,6 @@ const isAuthorized = async (req, res, next) => {
     // Bước 3: Cho req đi tiếp
     next()
   } catch (error) {
-    console.log('Error from authMiddleware:', error)
     //Case 1: Nếu accessToken hết hạn (expired) -> trả về 410 -> Client sử dụng refreshToken
     if (error.message?.includes('jwt expired')) {
       res.status(StatusCodes.GONE).json({ message: 'Please refresh token' })
