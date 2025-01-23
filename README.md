@@ -25,12 +25,14 @@ This project is a web application that demonstrates the use of JWT (JSON Web Tok
 ### Installation
 
 1. **Clone the repository**:
+
    ```bash
    git clone https://github.com/yourusername/your-repo-name.git
    cd your-repo-name
    ```
 
 2. **Install dependencies for the front-end**:
+
    ```bash
    cd web-base-jwt-axios-interceptors
    npm install
@@ -45,12 +47,14 @@ This project is a web application that demonstrates the use of JWT (JSON Web Tok
 ### Running the Application
 
 1. **Start the back-end server**:
+
    ```bash
    cd api-base-jwt-axios-interceptors
    npm start
    ```
 
 2. **Start the front-end development server**:
+
    ```bash
    cd web-base-jwt-axios-interceptors
    npm start
@@ -70,7 +74,6 @@ This project is a web application that demonstrates the use of JWT (JSON Web Tok
 - **DELETE /v1/users/logout**: User logout.
 - **PUT /v1/users/refresh_token**: Refresh access token.
 - **GET /v1/dashboards/access**: Access dashboard data (protected route).
-
 
 ## Acknowledgments
 
