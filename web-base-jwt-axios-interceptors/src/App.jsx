@@ -23,6 +23,7 @@ function App() {
         <Route path='/login' element={<Login />} />
       </Route>
       <Route element={<ProtectedRoute />}>
+        {/* <Outlet /> chính là các child route này */}
         <Route path='/dashboard' element={<Dashboard />} />
       </Route>
     </Routes>

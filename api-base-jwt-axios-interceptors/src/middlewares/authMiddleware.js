@@ -27,8 +27,8 @@ const isAuthorized = async (req, res, next) => {
     // Bước 1: Thực thi xác thực token (verify)
     // verify bằng cookies hoặc header -> chọn 1 cách
     const accessTokenDecoded = await JwtProvider.verifyToken(
-      accessTokenFromCookie,
-      // accessTokenFromHeader.substring('Bearer '.length),
+      accessTokenFromCookie, // Dùng token theo cách 1
+      // accessTokenFromHeader.substring('Bearer '.length), // Dùng token theo cách 2
       ACCESS_TOKEN_SECRET_SIGNATURE
     )
     // Bước 2: Nếu token hợp lệ thì sẽ lưu thông tin đã decode vào req.jwtDecoded để sử dụng cho các tầng xử lý sau -> Lấy đc các giá trị đã decode (email, id user)
@@ -47,6 +47,7 @@ const isAuthorized = async (req, res, next) => {
       .json({ message: 'Unauthorized! Please login again' })
   }
 }
+
 export const authMiddleware = {
   isAuthorized
 }

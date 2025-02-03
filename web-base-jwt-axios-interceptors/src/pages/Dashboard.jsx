@@ -13,16 +13,19 @@ function Dashboard() {
   const navigate = useNavigate()
 
   const handleLogout = async () => {
-    // Case 1: Với trường hợp dùng localStorage -> Xóa thông tin user trong localStorage
+    // Case 1: Dùng Local storage -> Xóa thông tin user trong local storage phía frontend
+    // Clear all authentication data from localStorage
     localStorage.removeItem('userInfo')
     localStorage.removeItem('accessToken')
     localStorage.removeItem('refreshToken')
 
-    // Case 2: Với trường hợp dùng Cookies -> Gọi API để xử lý remove Cookies
+    // Case 2: Dùng Http Only Cookis -> Gọi API để remove Cookies -> Chọn 1 trong 2 cách
     await authorizedAxiosInstance.delete(`${API_ROOT}/v1/users/logout`)
+
+    // Reset the user state to null, which will trigger the loading state
     setUser(null)
 
-    // Điều hướng đến Login sau khi remove thành công
+    // Redirect user to login page after remove token
     navigate('/login')
   }
   useEffect(() => {

@@ -84,10 +84,41 @@ const logout = async (req, res) => {
 
 const refreshToken = async (req, res) => {
   try {
-    // Do something
-    res.status(StatusCodes.OK).json({ message: ' Refresh Token API success.' })
+    // Case 1: Lấy từ cookies đã đính kèm trong request
+    const refreshTokenFromCookie = req.cookies?.refreshToken
+    // Case 2: Từ local storage phía FE truyền vào body khi gọi API
+    const refreshTokenFromBody = req.body?.refreshToken
+
+    // Verify / giải mã refresh token xem có hợp lệ hay không
+    const refreshTokenDecoded = await JwtProvider.verifyToken(
+      // refreshTokenFromCookie, // Dùng token theo cách 1
+      refreshTokenFromBody, // Dùng token theo cách 2
+      REFRESH_TOKEN_SECRET_SIGNATURE
+    )
+    // Vì chúng ta chỉ lưu những thông tin unique và cố định của user trong token -> lấy luôn từ decode ra -> Tiết kiệm query vào DB để lấy data mới
+    // Tạo access Token mới
+    const payload = {
+      id: refreshTokenDecoded.id,
+      email: refreshTokenDecoded.email
+    }
+    const accessToken = await JwtProvider.generateToken(
+      payload,
+      ACCESS_TOKEN_SECRET_SIGNATURE,
+      '1h'
+    )
+    // Res lại cookies accessToken cho case dùng cookies
+    res.cookie('accessToken', accessToken, {
+      httpOnly: true,
+      secure: true,
+      sameSite: 'none',
+      maxAge: ms('14 days')
+    })
+    // Trả về accessToken mới cho phía FE khi Fe cần update lại token trong local storage
+    res.status(StatusCodes.OK).json({ accessToken })
   } catch (error) {
-    res.status(StatusCodes.INTERNAL_SERVER_ERROR).json(error)
+    res
+      .status(StatusCodes.INTERNAL_SERVER_ERROR)
+      .json({ message: 'Refresh token API is invalid' })
   }
 }
 
