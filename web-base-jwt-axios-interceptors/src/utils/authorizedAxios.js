@@ -30,6 +30,10 @@ authorizedAxiosInstance.interceptors.request.use(
     return Promise.reject(error)
   }
 )
+// Khởi tạo promise cho việc gọi refresh_api
+// Mục đích để Promise khi nhận các req refreshToken đầu tiên thì hold lại việc gọi API refresh_token cho tới khi xong thì mới
+// retry lại những api lỗi trước đó thay vì cứ gọi lại refreshTokenAPI liên tục với mỗi refresh lổi
+let refreshTokenPromise = null
 
 // Add a response interceptor: Can thiệp vào các response API
 authorizedAxiosInstance.interceptors.response.use(
@@ -52,32 +56,40 @@ authorizedAxiosInstance.interceptors.response.use(
     // Nếu nhận lỗi 410 từ phía BE -> Call API Refresh Token
     // Lấy danh sách các req API đang bị lỗi
     const originalRequest = error.config
-    console.log('originalRequest', originalRequest)
     if (error.response?.status === 410 && !originalRequest._retry) {
       // Gán thêm giá originalRequest._retry = true trong khoảng thời gian chờ để việc refresh token này chĩ luôn gọi 1 lần tại 1 thời điểm duy nhất
       originalRequest._retry = true
-
-      // Lấy RefreshToken từ localStorage nếu dùng localStorage
-      const refreshToken = localStorage.getItem('refreshToken')
-      // Call API Refresh Token
-      return refreshTokenAPI(refreshToken)
-        .then((res) => {
-          // lấy và gán lại accessToken vào localStorage nếu dùng localStorage
-          const { accessToken } = res.data
-          localStorage.setItem('accessToken', accessToken)
-          authorizedAxiosInstance.defaults.headers.Authorization = `Bearer ${accessToken}`
-          // Đồng thơi khi này accessToken cũng đã được update lại ở Cookie khi call API thành công (Trường hợp dùng Cookie)
-          // return lại axios instance kết hợp original request đễ gọi lại những API ban đầu bị lỗi
-          return authorizedAxiosInstance(originalRequest)
-        })
-        .catch((err) => {
-          // Nếu có bất kì lỗi nào do refreshToken đưa ra -> Đăng xuất
-          handleLogoutAPI().then(() => {
-            // localStorage.removeItem('userInfo')
-            location.href = '/login'
+      if (!refreshTokenPromise) {
+        // Lấy RefreshToken từ localStorage nếu dùng localStorage
+        const refreshToken = localStorage.getItem('refreshToken')
+        // Call API Refresh Token
+        refreshTokenPromise = refreshTokenAPI(refreshToken)
+          .then((res) => {
+            // lấy và gán lại accessToken vào localStorage nếu dùng localStorage
+            const { accessToken } = res.data
+            localStorage.setItem('accessToken', accessToken)
+            authorizedAxiosInstance.defaults.headers.Authorization = `Bearer ${accessToken}`
           })
-          return Promise.reject(err)
-        })
+          .catch((err) => {
+            // Nếu có bất kì lỗi nào do refreshToken đưa ra -> Đăng xuất
+            handleLogoutAPI().then(() => {
+              // localStorage.removeItem('userInfo')
+              location.href = '/login'
+            })
+            return Promise.reject(err)
+          })
+          .finally(() => {
+            // Dù API refresh Token thành công hay lỗi thì vẫn sẽ trả về gí trị null (giá trị ban đầu)
+            refreshTokenPromise = null
+          })
+      }
+
+      return refreshTokenPromise.then(() => {
+        // API refresh Token thành công -> gọi lại 1 lần request đầu tiên
+        // Đồng thơi khi này accessToken cũng đã được update lại ở Cookie khi call API thành công (Trường hợp dùng Cookie)
+        // return lại axios instance kết hợp original request đễ gọi lại những API ban đầu bị lỗi
+        return authorizedAxiosInstance(originalRequest)
+      })
     }
     // Xử lý tập trung phần hiển thị thông báo lỗi từ API trả về -> Clean code - setup 1 lần cho tất cả response API
     // 410: GONE -> xử lý cho vấn đề refresh token
