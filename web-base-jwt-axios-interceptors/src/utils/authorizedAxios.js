@@ -56,9 +56,8 @@ authorizedAxiosInstance.interceptors.response.use(
     // Nếu nhận lỗi 410 từ phía BE -> Call API Refresh Token
     // Lấy danh sách các req API đang bị lỗi
     const originalRequest = error.config
-    if (error.response?.status === 410 && !originalRequest._retry) {
+    if (error.response?.status === 410 && originalRequest) {
       // Gán thêm giá originalRequest._retry = true trong khoảng thời gian chờ để việc refresh token này chĩ luôn gọi 1 lần tại 1 thời điểm duy nhất
-      originalRequest._retry = true
       if (!refreshTokenPromise) {
         // Lấy RefreshToken từ localStorage nếu dùng localStorage
         const refreshToken = localStorage.getItem('refreshToken')
