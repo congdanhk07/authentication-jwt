@@ -35,13 +35,13 @@ This project is a web application that demonstrates the use of JWT (JSON Web Tok
 
    ```bash
    cd web-base-jwt-axios-interceptors
-   npm install
+   yarn install
    ```
 
 3. **Install dependencies for the back-end**:
    ```bash
    cd api-base-jwt-axios-interceptors
-   npm install
+   yarn install
    ```
 
 ### Running the Application
@@ -50,14 +50,14 @@ This project is a web application that demonstrates the use of JWT (JSON Web Tok
 
    ```bash
    cd api-base-jwt-axios-interceptors
-   npm start
+   yarn dev
    ```
 
 2. **Start the front-end development server**:
 
    ```bash
    cd web-base-jwt-axios-interceptors
-   npm start
+   yarn dev
    ```
 
 3. **Access the application**:
