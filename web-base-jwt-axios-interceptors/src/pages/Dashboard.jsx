@@ -29,11 +29,6 @@ function Dashboard() {
       const res = await authorizedAxiosInstance.get(
         `${API_ROOT}/v1/dashboards/access`
       )
-      // console.log('Data from API', res.data)
-      // console.log(
-      //   'Data from Local Storage',
-      //   JSON.parse(localStorage.getItem('userInfo'))
-      // )
       setUser(res.data)
     }
     fetchData()

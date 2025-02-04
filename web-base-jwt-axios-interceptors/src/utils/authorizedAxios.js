@@ -41,7 +41,7 @@ authorizedAxiosInstance.interceptors.response.use(
   (error) => {
     // Mọi http status code nằm ngoài khoảng 2xx thì sẽ là error và xử lý ở đây
 
-    //Mechanism Refresh Token
+    //Cơ chế Refresh Token
     if (error.response?.status === 401) {
       handleLogoutAPI().then(() => {
         // Nếu dùng cookies thì phải xóa userIngfo sau khi call log out thành công
@@ -57,29 +57,34 @@ authorizedAxiosInstance.interceptors.response.use(
       // Gán thêm giá originalRequest._retry = true trong khoảng thời gian chờ để việc refresh token này chĩ luôn gọi 1 lần tại 1 thời điểm duy nhất
       originalRequest._retry = true
 
-      // Lấy RefreshToken từ localStorage nếu dùng local storage
+      // Lấy RefreshToken từ localStorage nếu dùng localStorage
       const refreshToken = localStorage.getItem('refreshToken')
       // Call API Refresh Token
-      refreshTokenAPI(refreshToken)
+      return refreshTokenAPI(refreshToken)
         .then((res) => {
-          // lấy và gán lại accessToken vào localStorage nếu dùng local
+          // lấy và gán lại accessToken vào localStorage nếu dùng localStorage
           const { accessToken } = res.data
           localStorage.setItem('accessToken', accessToken)
           authorizedAxiosInstance.defaults.headers.Authorization = `Bearer ${accessToken}`
-
-          //
+          // Đồng thơi khi này accessToken cũng đã được update lại ở Cookie khi call API thành công (Trường hợp dùng Cookie)
+          // return lại axios instance kết hợp original request đễ gọi lại những API ban đầu bị lỗi
+          return authorizedAxiosInstance(originalRequest)
         })
         .catch((err) => {
-          console.log('err', err)
+          // Nếu có bất kì lỗi nào do refreshToken đưa ra -> Đăng xuất
+          handleLogoutAPI().then(() => {
+            // localStorage.removeItem('userInfo')
+            location.href = '/login'
+          })
+          return Promise.reject(err)
         })
-
-      // Xử lý tập trung phần hiển thị thông báo lỗi từ API trả về -> Clean code - setup 1 lần cho tất cả response API
-      // 410: GONE -> xử lý cho vấn đề refresh token
-      if (error.response?.status !== 410) {
-        toast.error(error.response?.data?.message || error?.message)
-      }
-      return Promise.reject(error)
     }
+    // Xử lý tập trung phần hiển thị thông báo lỗi từ API trả về -> Clean code - setup 1 lần cho tất cả response API
+    // 410: GONE -> xử lý cho vấn đề refresh token
+    if (error.response?.status !== 410) {
+      toast.error(error.response?.data?.message || error?.message)
+    }
+    return Promise.reject(error)
   }
 )
 export default authorizedAxiosInstance

@@ -36,12 +36,14 @@ const login = async (req, res) => {
     const accessToken = await JwtProvider.generateToken(
       payload,
       ACCESS_TOKEN_SECRET_SIGNATURE,
-      '1h'
+      // '1h'
+      5
     )
     const refreshToken = await JwtProvider.generateToken(
       payload,
       REFRESH_TOKEN_SECRET_SIGNATURE,
       '14 days'
+      // 15
     )
     //3 Xử lý trường hợp trả về http only cookie cho Client (Cách 1: Lưu vào cookie)
     // Thời gian sống tối đa của cookie là 14 ngày, chúng ta có thể set là tối đa nhưng thời gian sống của accessToken lưu bên trong là 1h
@@ -104,9 +106,10 @@ const refreshToken = async (req, res) => {
     const accessToken = await JwtProvider.generateToken(
       payload,
       ACCESS_TOKEN_SECRET_SIGNATURE,
-      '1h'
+      // '1h'
+      5
     )
-    // Res lại cookies accessToken cho case dùng cookies
+    // Res lại cookies (đính kèm lại) accessToken cho case dùng cookies
     res.cookie('accessToken', accessToken, {
       httpOnly: true,
       secure: true,
